@@ -12,12 +12,114 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
+/**
+ * @OA\Info(
+ *     title="Ges-Comptes API",
+ *     version="1.0.0",
+ *     description="API pour la gestion des comptes bancaires"
+ * )
+ * @OA\Schema(
+ *     schema="CompteResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="string", example="uuid"),
+ *     @OA\Property(property="numero_compte", type="string", example="CPT-ABC123"),
+ *     @OA\Property(property="titulaire", type="string", example="John Doe"),
+ *     @OA\Property(property="type", type="string", enum={"epargne", "cheque"}),
+ *     @OA\Property(property="solde", type="number", format="float", example=1000.50),
+ *     @OA\Property(property="devise", type="string", example="FCFA"),
+ *     @OA\Property(property="date_creation", type="string", format="date", example="2023-01-01"),
+ *     @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}),
+ *     @OA\Property(property="derniere_modification", type="string", format="date-time"),
+ *     @OA\Property(property="version", type="integer", example=1),
+ *     @OA\Property(property="client", ref="#/components/schemas/Client"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ * @OA\Schema(
+ *     schema="Client",
+ *     type="object",
+ *     @OA\Property(property="id", type="string", example="uuid"),
+ *     @OA\Property(property="nom", type="string", example="Doe"),
+ *     @OA\Property(property="prenom", type="string", example="John"),
+ *     @OA\Property(property="email", type="string", format="email"),
+ *     @OA\Property(property="telephone", type="string", example="+221771234567"),
+ *     @OA\Property(property="cni", type="string", example="123456789012"),
+ *     @OA\Property(property="adresse", type="string")
+ * )
+ * @OA\Schema(
+ *     schema="Pagination",
+ *     type="object",
+ *     @OA\Property(property="currentPage", type="integer", example=1),
+ *     @OA\Property(property="totalPages", type="integer", example=5),
+ *     @OA\Property(property="totalItems", type="integer", example=50),
+ *     @OA\Property(property="itemsPerPage", type="integer", example=10),
+ *     @OA\Property(property="hasNext", type="boolean", example=true),
+ *     @OA\Property(property="hasPrevious", type="boolean", example=false)
+ * )
+ */
 class CompteController extends Controller
 {
     use RestResponse;
 
     /**
      * GET /api/v1/comptes
+     * @OA\Get(
+     *     path="/api/v1/comptes",
+     *     summary="Lister tous les comptes",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filtrer par type de compte (epargne, cheque)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="statut",
+     *         in="query",
+     *         description="Filtrer par statut (actif, bloque, ferme)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Rechercher par nom/prénom du titulaire ou numéro de compte",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Champ de tri",
+     *         required=false,
+     *         @OA\Schema(type="string", default="created_at")
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Ordre de tri (asc, desc)",
+     *         required=false,
+     *         @OA\Schema(type="string", default="desc")
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Nombre d'éléments par page (max 100)",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des comptes récupérée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CompteResource")),
+     *             @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request)
     {
@@ -35,7 +137,7 @@ class CompteController extends Controller
         if ($search = $request->get('search')) {
             $query->whereHas('client', function ($q) use ($search) {
                 $q->where('nom', 'like', "%{$search}%")
-                  ->orWhere('prenom', 'like', "%{$search}%");
+                    ->orWhere('prenom', 'like', "%{$search}%");
             })->orWhere('numero_compte', 'like', "%{$search}%");
         }
 
@@ -55,19 +157,6 @@ class CompteController extends Controller
         );
     }
 
-    /**
-     * GET /api/v1/clients/{id}/comptes
-     */
-    public function comptesByClient($id)
-    {
-        $comptes = Compte::where('client_id', $id)->paginate(10);
-
-        return $this->successResponse(
-            CompteResource::collection($comptes),
-            "Comptes du client {$id} récupérés avec succès",
-            $this->paginationData($comptes)
-        );
-    }
 
     public function store(StoreCompteRequest $request)
     {
@@ -112,6 +201,46 @@ class CompteController extends Controller
         return $this->successResponse(
             new CompteResource($compte),
             'Compte créé avec succès'
+        );
+    }
+
+    /**
+     * Afficher un compte spécifique
+     * @OA\Get(
+     *     path="/api/v1/comptes/{compte}",
+     *     summary="Afficher les détails d'un compte",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Détails du compte récupérés",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="string")
+     *         )
+     *     )
+     * )
+     */
+    public function show(Compte $compte)
+    {
+        return $this->successResponse(
+            new CompteResource($compte->load('client')),
+            'Détails du compte récupérés'
         );
     }
 }
