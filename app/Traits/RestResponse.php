@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Http\Response;
+
 trait RestResponse
 {
     protected function successResponse($data, $message = '', $pagination = null)
@@ -19,12 +21,13 @@ trait RestResponse
             $response['pagination'] = $pagination;
         }
 
-        return response()->json($response, 200);
+        return response()->json($response, Response::HTTP_OK);
     }
 
-    protected function errorResponse($message, $code = 400)
+    protected function errorResponse($message, $code = Response::HTTP_BAD_REQUEST)
     {
         return response()->json([
+            'code' => $code,
             'success' => false,
             'error' => $message
         ], $code);

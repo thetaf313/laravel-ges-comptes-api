@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCompteRequest;
+use App\Http\Requests\UpdateCompteRequest;
 use App\Http\Resources\CompteResource;
 use App\Models\Client;
 use App\Models\Compte;
@@ -241,6 +242,28 @@ class CompteController extends Controller
         return $this->successResponse(
             new CompteResource($compte->load('client')),
             'Détails du compte récupérés'
+        );
+    }
+
+    public function update(UpdateCompteRequest $request, Compte $compte)
+    {
+        $data = $request->validated();
+
+        $compte->update($data);
+
+        return $this->successResponse(
+            new CompteResource($compte),
+            'Compte mis à jour avec succès'
+        );
+    }
+
+    public function destroy(Compte $compte)
+    {
+        $compte->delete();
+
+        return $this->successResponse(
+            null,
+            'Compte supprimé avec succès'
         );
     }
 }
