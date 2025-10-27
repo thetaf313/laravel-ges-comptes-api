@@ -28,9 +28,7 @@ class StoreClientRequest extends FormRequest
             'telephone' => 'required|regex:/^(\+221)?7[05678]\d{7}$/|unique:clients,telephone',
             'date_naissance' => 'required|date|before:today',
             'adresse' => 'required|string',
-            'cni' => 'required|regex:/^[12]\d{12}$/|unique:clients,cni',
-            'code' => 'nullable|string|max:255',
-            'password' => 'required|string|min:8',
+            'cni' => 'required|regex:/^[12]\d{12}$/|unique:clients,cni'
         ];
     }
 }

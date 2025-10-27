@@ -17,15 +17,14 @@ class CompteFactory extends Factory
     public function definition(): array
     {
         return [
-            'client_id' => \App\Models\Client::factory(),
-            'numero_compte' => 'CPT-' . strtoupper($this->faker->unique()->lexify('????????')),
+            'numero_compte' => 'C' . $this->faker->unique()->numerify('########'),
             'titulaire' => $this->faker->name,
             'type' => $this->faker->randomElement(['epargne', 'cheque']),
-            'solde' => $this->faker->randomFloat(2, 0, 1000000),
-            'devise' => $this->faker->randomElement(['EUR', 'XOF', 'USD']),
-            'date_creation' => $this->faker->date(),
-            'statut' => $this->faker->randomElement(['actif', 'bloque', 'ferme']),
-            'version' => 1,
+            'solde_initial' => $this->faker->numberBetween(10000, 1000000),
+            'devise' => 'XOF',
+            'statut' => 'actif',
+            'date_creation' => now(),
+            'metadonnees' => ['derniere_modification' => now(), 'version' => 1],
         ];
     }
 }

@@ -17,12 +17,11 @@ return new class extends Migration
             $table->string('numero_compte')->unique();
             $table->string('titulaire');
             $table->enum('type', ['epargne', 'cheque']);
-            $table->decimal('solde', 15, 2)->default(0);
-            $table->string('devise', 3)->default('XOF');
-            $table->date('date_creation');
+            $table->decimal('solde_initial', 15, 2)->min(10000);
+            $table->string('devise', 10)->default('XOF');
+            $table->date('date_creation')->default(now());
             $table->enum('statut', ['actif', 'bloque', 'ferme'])->default('actif');
-            $table->timestamp('derniere_modification')->useCurrent();
-            $table->unsignedInteger('version')->default(1);
+            $table->json('metadonnees')->nullable();
             $table->timestamps();
 
             // Index pour optimiser les recherches
