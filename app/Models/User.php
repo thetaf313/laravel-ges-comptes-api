@@ -12,15 +12,56 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (!$model->getKey()) {
+                $model->{$model->getKeyName()} = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
+    /** 🔗 Relations */
+
+    public function isClient()
+    {
+        return $this->authenticatable_type === Client::class;
+    }
+
+    public function isAdmin()
+    {
+        return $this->authenticatable_type === Admin::class;
+    }
+
+    public function getRoleAttribute()
+    {
+        if ($this->isAdmin()) {
+            return 'admin';
+        } elseif ($this->isClient()) {
+            return 'client';
+        } else {
+            return 'guest';
+        }
+    }
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
         'email',
         'password',
+        'authenticatable_type',
+        'authenticatable_id',
+        'verification_code',
+        'code_expires_at',
+        'is_active',  // Nouveau : true si actif, false sinon
     ];
 
     /**
@@ -41,5 +82,14 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'code_expires_at' => 'datetime',
+        'is_active' => 'boolean'
     ];
+
+    /** 🔗 Relation polymorphe */
+    public function authenticatable()
+    {
+        return $this->morphTo();
+    }
+
 }

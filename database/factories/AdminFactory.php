@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Client>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Admin>
  */
-class ClientFactory extends Factory
+class AdminFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -20,10 +20,7 @@ class ClientFactory extends Factory
             'id' => $this->faker->uuid,
             'nom' => $this->faker->lastName,
             'prenom' => $this->faker->firstName,
-            'cni' => '1' . $this->faker->numerify('###########'),  // CNI valide (13 chiffres, commence par 1)
             'telephone' => '+221' . $this->faker->numerify('7########'),  // Téléphone sénégalais
-            'date_naissance' => $this->faker->date('Y-m-d', '2005-12-31'), // Date de naissance avant aujourd'hui
-            'adresse' => $this->faker->address,
         ];
     }
 }

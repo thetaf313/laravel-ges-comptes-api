@@ -6,7 +6,7 @@ use Illuminate\Http\Response;
 
 trait RestResponse
 {
-    protected function successResponse($data, $message = '', $pagination = null)
+    protected function successResponse($data, $message = '', $pagination = null, $status = Response::HTTP_OK)
     {
         $response = [
             'success' => true,
@@ -21,7 +21,7 @@ trait RestResponse
             $response['pagination'] = $pagination;
         }
 
-        return response()->json($response, Response::HTTP_OK);
+        return response()->json($response, $status);
     }
 
     protected function errorResponse($message, $code = Response::HTTP_BAD_REQUEST)

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ValidCni;
+use App\Rules\ValidTelephoneSenegalais;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCompteRequest extends FormRequest
@@ -22,25 +24,26 @@ class StoreCompteRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'client_id' => 'required|exists:clients,id',
+            'titulaire' => 'required|string|max:255',
             'type' => 'required|in:epargne,cheque',
-            'soldeInitial' => 'required|numeric|min:10000',
+            'solde_initial' => 'required|numeric|min:0',
             'devise' => 'required|string',
-            'solde' => 'required|numeric|min:10000',
-            'client' => 'required|array',
-            'client.id' => 'nullable|exists:clients,id',
-            'client.titulaire' => 'required|string|max:255',
-            'client.nci' => 'required|regex:/^[12]\d{12}$/|unique:clients,cni',
-            'client.email' => 'required|email|unique:clients,email',
-            'client.telephone' => 'required|regex:/^(\+221)?7[05678]\d{7}$/|unique:clients,telephone',
-            'client.adresse' => 'required|string',
         ];
     }
 
     public function messages()
     {
         return [
-            'soldeInitial.min' => 'Le solde initial doit être supérieur ou égal à 10 000 FCFA.',
-            'client.telephone.regex' => 'Le numéro doit être un téléphone mobile sénégalais valide.',
+            'client_id.required' => 'L\'ID du client est requis.',
+            'client_id.exists' => 'Le client spécifié n\'existe pas.',
+            'titulaire.required' => 'Le nom du titulaire est requis.',
+            'type.required' => 'Le type de compte est requis.',
+            'type.in' => 'Le type doit être épargne ou chèque.',
+            'solde_initial.required' => 'Le solde initial est requis.',
+            'solde_initial.numeric' => 'Le solde initial doit être un nombre.',
+            'solde_initial.min' => 'Le solde initial doit être positif.',
+            'devise.required' => 'La devise est requise.',
         ];
     }
 }
