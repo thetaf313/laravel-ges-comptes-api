@@ -36,6 +36,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/comptes/{compte}', [CompteController::class, 'show']);
     Route::patch('/comptes/{compte}', [CompteController::class, 'update']);
     Route::delete('/comptes/{compte}', [CompteController::class, 'destroy']);
+    Route::post('/comptes/{compte}/bloquer', [CompteController::class, 'bloquer']);
+    Route::post('/comptes/{compte}/debloquer', [CompteController::class, 'debloquer']);
     Route::get('clients/{client}/comptes', [ClientController::class, 'comptesByClient']);
 });
 

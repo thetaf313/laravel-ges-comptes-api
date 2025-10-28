@@ -107,12 +107,21 @@ class Compte extends Model
         'statut',
         'metadonnees',
         'date_fermeture',
+        'motifBlocage',
+        'dateBlocage',
+        'dateDeblocagePrevue',
+        'motifDeblocage',
+        'dateDeblocage',
     ];
 
     protected $casts = [
         'metadonnees' => 'array',
         'date_creation' => 'datetime',
         'solde_intitial' => 'decimal:2',
+        'dateBlocage' => 'datetime',
+        'dateDeblocagePrevue' => 'datetime',
+        'dateDeblocage' => 'datetime',
+        'date_fermeture' => 'datetime',
     ];
 
     public function getMetadonneesAttribute($value)
