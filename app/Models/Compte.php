@@ -5,12 +5,13 @@ namespace App\Models;
 use App\Services\CompteService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class Compte extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -105,12 +106,22 @@ class Compte extends Model
         'date_creation',
         'statut',
         'metadonnees',
+        'date_fermeture',
+        'motifBlocage',
+        'dateBlocage',
+        'dateDeblocagePrevue',
+        'motifDeblocage',
+        'dateDeblocage',
     ];
 
     protected $casts = [
         'metadonnees' => 'array',
         'date_creation' => 'datetime',
         'solde_intitial' => 'decimal:2',
+        'dateBlocage' => 'datetime',
+        'dateDeblocagePrevue' => 'datetime',
+        'dateDeblocage' => 'datetime',
+        'date_fermeture' => 'datetime',
     ];
 
     public function getMetadonneesAttribute($value)

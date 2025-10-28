@@ -10,22 +10,16 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class SendClientNotification
+class NotificationSent
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public $client;
-    public $password;
-    public $code;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($client, $password, $code)
+    public function __construct()
     {
-        $this->client = $client;
-        $this->password = $password;
-        $this->code = $code;
+        //
     }
 
     /**
