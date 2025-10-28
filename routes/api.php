@@ -34,6 +34,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/comptes', [CompteController::class, 'index']);
     Route::post('/comptes', [CompteController::class, 'store']);
     Route::get('/comptes/{compte}', [CompteController::class, 'show']);
+    Route::patch('/comptes/{compte}', [CompteController::class, 'update']);
     Route::get('clients/{client}/comptes', [ClientController::class, 'comptesByClient']);
 });
 

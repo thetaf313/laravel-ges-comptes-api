@@ -318,14 +318,100 @@ class CompteController extends Controller
 
     public function update(UpdateCompteRequest $request, Compte $compte)
     {
-        $data = $request->validated();
+        Log::info('📝 Mise à jour du compte', [
+            'compte_id' => $compte->id,
+            'data' => $request->all(),
+        ]);
 
-        $compte->update($data);
+        try {
+            $data = $request->validated();
 
-        return $this->successResponse(
-            new CompteResource($compte),
-            'Compte mis à jour avec succès'
-        );
+            DB::transaction(function () use ($data, $compte) {
+                $currentVersion = $compte->metadonnees['version'] ?? 1;
+                $updateMetadata = false;
+
+                // Mise à jour du titulaire du compte
+                if (isset($data['titulaire'])) {
+                    $compte->update([
+                        'titulaire' => $data['titulaire'],
+                        'metadonnees' => array_merge($compte->metadonnees ?? [], [
+                            'derniere_modification' => now(),
+                            'version' => $currentVersion + 1,
+                        ]),
+                    ]);
+                    $updateMetadata = true;
+                }
+
+                // Mise à jour des informations client
+                if (isset($data['informationsClient']) && !empty($data['informationsClient'])) {
+                    $clientData = $data['informationsClient'];
+
+                    // Mise à jour du client
+                    $updateData = [];
+                    if (isset($clientData['telephone'])) {
+                        $updateData['telephone'] = $clientData['telephone'];
+                    }
+                    if (isset($clientData['nci'])) {
+                        $updateData['nci'] = $clientData['nci'];
+                    }
+
+                    if (!empty($updateData)) {
+                        $compte->client->update($updateData);
+                        $updateMetadata = true;
+                    }
+
+                    // Mise à jour de l'utilisateur (email et password)
+                    if (isset($clientData['email']) || isset($clientData['password'])) {
+                        $userUpdateData = [];
+                        if (isset($clientData['email'])) {
+                            $userUpdateData['email'] = $clientData['email'];
+                        }
+                        if (isset($clientData['password'])) {
+                            $userUpdateData['password'] = Hash::make($clientData['password']);
+                        }
+
+                        if (!empty($userUpdateData)) {
+                            $compte->client->user->update($userUpdateData);
+                            $updateMetadata = true;
+                        }
+                    }
+                }
+
+                // Mettre à jour les métadonnées si des changements ont été effectués
+                if ($updateMetadata && !isset($data['titulaire'])) {
+                    $compte->update([
+                        'metadonnees' => array_merge($compte->metadonnees ?? [], [
+                            'derniere_modification' => now(),
+                            'version' => $currentVersion + 1,
+                        ]),
+                    ]);
+                }
+            });
+
+            // Recharger le compte avec les relations mises à jour
+            $compte->load('client.user');
+
+            return $this->successResponse(
+                new CompteResource($compte),
+                'Compte mis à jour avec succès'
+            );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Les données fournies sont invalides',
+                    'details' => $e->errors(),
+                ],
+            ], 400);
+        } catch (\Throwable $th) {
+            Log::error('Erreur mise à jour compte: ' . $th->getMessage(), ['trace' => $th->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'code' => 500,
+                'message' => 'Erreur côté serveur: ' . $th->getMessage(),
+            ], 500);
+        }
     }
 
     public function destroy(Compte $compte)
