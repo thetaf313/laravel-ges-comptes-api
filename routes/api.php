@@ -31,10 +31,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // });
 
 Route::prefix('v1')->group(function () {
-        Route::get('/comptes', [CompteController::class, 'index']);
-        Route::post('/comptes', [CompteController::class, 'store']);
-        Route::get('/comptes/{compte}', [CompteController::class, 'show']);
-        Route::get('clients/{client}/comptes', [ClientController::class, 'comptesByClient']);
-    });
+    Route::get('/comptes', [CompteController::class, 'index']);
+    Route::post('/comptes', [CompteController::class, 'store']);
+    Route::get('/comptes/{compte}', [CompteController::class, 'show']);
+    Route::get('clients/{client}/comptes', [ClientController::class, 'comptesByClient']);
+});
 
 Route::get('/v1/test', fn() => response()->json(['ok' => true]));

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Events\AccountCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCompteRequest;
 use App\Http\Requests\UpdateCompteRequest;
 use App\Http\Resources\CompteResource;
 use App\Models\Client;
 use App\Models\Compte;
+use App\Models\User;
 use App\Services\CompteService;
 use App\Traits\RestResponse;
 use Illuminate\Http\Request;
@@ -190,33 +192,54 @@ class CompteController extends Controller
             $data = $request->validated();
 
             $client = null;
-
             $compte = null;
 
             DB::transaction(function () use ($data, &$client, &$compte) {
+                // Gérer la création/récupération du client
+                if (isset($data['client']['id']) && !empty($data['client']['id'])) {
+                    // Utiliser un client existant
+                    $client = Client::with('user')->find($data['client']['id']);
+                    if (!$client) {
+                        throw new \Exception('Client spécifié non trouvé');
+                    }
+                    if (!$client->user) {
+                        throw new \Exception('Client sans compte utilisateur associé');
+                    }
+                } else {
+                    // Générer mot de passe temporaire et code SMS
+                    $password = Str::random(10);
+                    $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
-                // Vérifier si le client existe
-                $client = Client::with('user')->find($data['client_id']);
+                    // Créer un nouveau client
+                    $client = Client::create([
+                        'nom' => explode(' ', $data['client']['titulaire'])[0] ?? $data['client']['titulaire'],
+                        'prenom' => explode(' ', $data['client']['titulaire'])[1] ?? '',
+                        'email' => $data['client']['email'],
+                        'telephone' => $data['client']['telephone'],
+                        'adresse' => $data['client']['adresse'],
+                        'cni' => $data['client']['nci'],
+                    ]);
 
-                if (!$client) {
-                    throw new \Exception('Client non trouvé');
+                    $user = User::create([
+                        'email' => $data['client']['email'],
+                        'password' => bcrypt(Str::random(10)), // Mot de passe temporaire
+                        'verification_code' => $code,
+                        'code_expires_at' => now()->addHour(24),
+                        'authenticatable_type' => Client::class,
+                        'authenticatable_id' => $client->id,
+                    ]);
+
+                    // Mettre à jour le client avec l'user_id
+                    $client->update(['user_id' => $user->id]);
                 }
-
-                if (!$client->user) {
-                    throw new \Exception('Client sans compte utilisateur associé');
-                }
-
-                // Générer mot de passe temporaire et code SMS
-                $password = Str::random(10);
-                $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
                 // Créer le compte
                 $compte = Compte::create([
                     'client_id' => $client->id,
                     'numero_compte' => app(CompteService::class)->generateAccountNumber(),
-                    'titulaire' => $data['titulaire'],
+                    'titulaire' => $client->nom . ' ' . $client->prenom,
                     'type' => $data['type'],
-                    'solde_initial' => $data['solde_initial'],
+                    'solde_initial' => $data['soldeInitial'],
                     'devise' => $data['devise'],
                     'statut' => 'actif',
                     'date_creation' => now(),
@@ -224,7 +247,7 @@ class CompteController extends Controller
                 ]);
 
                 // Envoyer les notifications
-                event(new \App\Events\SendClientNotification($client, $password, $code));
+                event(new AccountCreated($client, $password, $code));
             });
 
             return $this->successResponse(
