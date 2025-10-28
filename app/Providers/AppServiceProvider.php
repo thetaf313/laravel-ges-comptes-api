@@ -7,7 +7,7 @@ use App\Contracts\InAppNotificationInterface;
 use App\Contracts\SmsServiceInterface;
 use App\Services\CompteService;
 use App\Services\Email\EmailService;
-use App\Services\InAppNotificationService;
+use App\Services\Notification\InAppNotificationService;
 use App\Services\Sms\TwilioSmsService;
 use Illuminate\Support\ServiceProvider;
 

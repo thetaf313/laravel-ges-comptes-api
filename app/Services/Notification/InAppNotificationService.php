@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Notification;
 
 use App\Contracts\InAppNotificationInterface;
 use App\Models\User;
@@ -18,7 +18,7 @@ class InAppNotificationService implements InAppNotificationInterface
     {
         try {
             $user = User::find($userId);
-            
+
             if ($user) {
                 $user->notifications()->create([
                     'message' => $message,
@@ -26,16 +26,16 @@ class InAppNotificationService implements InAppNotificationInterface
                     'type' => $data['type'] ?? 'account_created',
                     'read_at' => null,
                 ]);
-                
+
                 // Déclencher un event pour les notifications en temps réel
                 event(new \App\Events\NotificationSent($userId, $message));
-                
+
                 return true;
             }
-            
+
             return false;
         } catch (\Exception $e) {
-            \Log::error('In-app notification failed: ' . $e->getMessage());
+            Log::error('In-app notification failed: ' . $e->getMessage());
             return false;
         }
     }

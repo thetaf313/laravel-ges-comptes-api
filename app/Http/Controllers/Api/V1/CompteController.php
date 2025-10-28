@@ -182,6 +182,60 @@ class CompteController extends Controller
     }
 
 
+    /**
+     * POST /api/v1/comptes
+     * @OA\Post(
+     *     path="/api/v1/comptes",
+     *     summary="Créer un nouveau compte",
+     *     tags={"Comptes"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"type", "soldeInitial", "devise", "client"},
+     *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="epargne"),
+     *             @OA\Property(property="soldeInitial", type="number", format="float", example=1000.00),
+     *             @OA\Property(property="devise", type="string", example="FCFA"),
+     *             @OA\Property(property="client", type="object",
+     *                 @OA\Property(property="titulaire", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", format="email", example="john.doe@example.com"),
+     *                 @OA\Property(property="telephone", type="string", example="+221771234567"),
+     *                 @OA\Property(property="adresse", type="string", example="Dakar, Sénégal"),
+     *                 @OA\Property(property="nci", type="string", example="123456789012"),
+     *                 description="Informations du nouveau client (ou utiliser 'id' pour un client existant)"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Compte créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Données de requête invalides",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *                 @OA\Property(property="details", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur côté serveur")
+     *         )
+     *     )
+     * )
+     */
     public function store(StoreCompteRequest $request)
     {
         Log::info('📥 Requête reçue dans store()', [
@@ -318,6 +372,70 @@ class CompteController extends Controller
         );
     }
 
+    /**
+     * PUT /api/v1/comptes/{compte}
+     * @OA\Put(
+     *     path="/api/v1/comptes/{compte}",
+     *     summary="Mettre à jour un compte",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte à mettre à jour",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="titulaire", type="string", example="Jane Doe"),
+     *             @OA\Property(property="informationsClient", type="object",
+     *                 @OA\Property(property="telephone", type="string", example="+221771234567"),
+     *                 @OA\Property(property="nci", type="string", example="123456789012"),
+     *                 @OA\Property(property="email", type="string", format="email", example="jane.doe@example.com"),
+     *                 @OA\Property(property="password", type="string", format="password", example="newpassword123")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte mis à jour avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte mis à jour avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Données de requête invalides",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *                 @OA\Property(property="details", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Compte non trouvé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur côté serveur")
+     *         )
+     *     )
+     * )
+     */
     public function update(UpdateCompteRequest $request, Compte $compte)
     {
         Log::info('📝 Mise à jour du compte', [
