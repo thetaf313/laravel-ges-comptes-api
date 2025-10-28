@@ -414,13 +414,87 @@ class CompteController extends Controller
         }
     }
 
+    /**
+     * DELETE /api/v1/comptes/{compte}
+     * @OA\Delete(
+     *     path="/api/v1/comptes/{compte}",
+     *     summary="Supprimer un compte (soft delete)",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         description="ID du compte à supprimer",
+     *         required=true,
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte supprimé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="statut", type="string", example="ferme"),
+     *                 @OA\Property(property="dateFermeture", type="string", format="date-time", example="2025-10-19T11:15:00Z")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Compte non trouvé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur côté serveur")
+     *         )
+     *     )
+     * )
+     */
     public function destroy(Compte $compte)
     {
-        $compte->delete();
+        try {
+            // Vérifier si le compte n'est pas déjà fermé
+            if ($compte->statut === 'ferme') {
+                return $this->errorResponse(
+                    'Ce compte est déjà fermé',
+                    400
+                );
+            }
 
-        return $this->successResponse(
-            null,
-            'Compte supprimé avec succès'
-        );
+            // Mettre à jour le statut et la date de fermeture
+            $compte->update([
+                'statut' => 'ferme',
+                'date_fermeture' => now(),
+            ]);
+
+            // Soft delete du compte
+            $compte->delete();
+
+            return $this->successResponse([
+                'id' => $compte->id,
+                'numeroCompte' => $compte->numero_compte,
+                'statut' => $compte->statut,
+                'dateFermeture' => $compte->date_fermeture?->toISOString(),
+            ], 'Compte supprimé avec succès');
+        } catch (\Throwable $th) {
+            Log::error('Erreur lors de la suppression du compte', [
+                'compte_id' => $compte->id,
+                'error' => $th->getMessage()
+            ]);
+
+            return $this->errorResponse(
+                'Erreur côté serveur: ' . $th->getMessage(),
+                500
+            );
+        }
     }
 }
