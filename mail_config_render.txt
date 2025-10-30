@@ -1,0 +1,10 @@
+# Configuration recommandée pour Render (Mailgun)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailgun.org
+MAIL_PORT=587
+MAIL_USERNAME=your-mailgun-smtp-username
+MAIL_PASSWORD=your-mailgun-smtp-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="Ges-Comptes"
+MAIL_ENABLED=true

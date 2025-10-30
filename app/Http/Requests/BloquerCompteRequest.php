@@ -22,9 +22,11 @@ class BloquerCompteRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'dateBlocage' => 'required|date',
             'motif' => 'required|string|max:255',
             'duree' => 'required|integer|min:1|max:365',
-            'unite' => 'required|in:jours,mois',
+            // accept both singular and plural forms for minute
+            'unite' => 'required|in:minute,minutes,jours,semaines,mois,annees',
         ];
     }
 
@@ -34,6 +36,8 @@ class BloquerCompteRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'dateBlocage.required' => 'La date de début de blocage est requise.',
+            'dateBlocage.date' => 'La date de début de blocage doit être une date valide.',
             'motif.required' => 'Le motif de blocage est obligatoire.',
             'motif.string' => 'Le motif doit être une chaîne de caractères.',
             'motif.max' => 'Le motif ne peut pas dépasser 255 caractères.',
@@ -42,7 +46,7 @@ class BloquerCompteRequest extends FormRequest
             'duree.min' => 'La durée doit être d\'au moins 1.',
             'duree.max' => 'La durée ne peut pas dépasser 365.',
             'unite.required' => 'L\'unité de temps est obligatoire.',
-            'unite.in' => 'L\'unité doit être soit "jours" soit "mois".',
+            'unite.in' => 'L\'unité doit être "minute(s)", "jours", "semaines", "mois" ou "annees".',
         ];
     }
 }

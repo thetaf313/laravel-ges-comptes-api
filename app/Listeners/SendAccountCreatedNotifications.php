@@ -24,46 +24,50 @@ class SendAccountCreatedNotifications
      */
     public function handle(AccountCreated $event): void
     {
-        $client = $event->client;
-        $password = $event->password;
-        $code = $event->code;
+        $clientData = $event->clientData;
 
-        // Envoi email avec le mot de passe temporaire
-        if ($client->email) {
+        // Envoi email avec le mot de passe temporaire et le code
+        if ($clientData->email) {
+            // Passer un payload compatible avec EmailService / SendPasswordMail
             SendEmailNotification::dispatch(
-                $client->email,
-                "Votre compte a été créé avec succès. Voici vos informations de connexion :\n\nMot de passe temporaire : {$password}\n\nVeuillez changer votre mot de passe après votre première connexion.",
+                $clientData->email,
+                "Votre compte bancaire a été créé avec succès !\n\n" .
+                    "Numéro de compte : {$clientData->numeroCompte}\n" .
+                    "Titulaire : {$clientData->getNomComplet()}\n" .
+                    "Mot de passe temporaire : {$clientData->password}\n" .
+                    "Code de vérification : {$clientData->code}\n\n" .
+                    "Veuillez vous connecter et changer votre mot de passe.",
                 [
-                    'client' => $client,
-                    'password' => $password,
+                    'client' => $clientData, // DTO exposes the same properties used by the mailable
+                    'password' => $clientData->password,
+                    'code' => $clientData->code,
                     'type' => 'account_created'
                 ]
             );
         }
 
         // Envoi SMS avec le code de vérification
-        if ($client->telephone) {
+        if ($clientData->telephone) {
             SendSmsNotification::dispatch(
-                $client->telephone,
-                "Votre compte bancaire a été créé. Code de vérification : {$code}. Mot de passe temporaire : {$password}",
+                $clientData->telephone,
+                "Votre compte bancaire {$clientData->numeroCompte} a été créé. " .
+                    "Code de vérification : {$clientData->code}. " .
+                    "Mot de passe temporaire : {$clientData->password}",
                 [
-                    'client' => $client,
-                    'code' => $code,
+                    'clientData' => $clientData,
                     'type' => 'account_created'
                 ]
             );
         }
 
-        // Notification in-app (uniquement si l'utilisateur existe)
-        if ($client->user_id) {
-            SendInAppNotification::dispatch(
-                $client->user_id,
-                "Bienvenue ! Votre compte bancaire a été créé avec succès. Un email et SMS contenant vos informations de connexion vous ont été envoyés.",
-                [
-                    'client' => $client,
-                    'type' => 'account_created'
-                ]
-            );
-        }
+        // Notification in-app (toujours envoyer car l'utilisateur est créé)
+        SendInAppNotification::dispatch(
+            $clientData->userId,
+            "Bienvenue {$clientData->getNomComplet()} ! Votre compte bancaire {$clientData->numeroCompte} a été créé avec succès. Un email et SMS contenant vos informations de connexion vous ont été envoyés.",
+            [
+                'clientData' => $clientData,
+                'type' => 'account_created'
+            ]
+        );
     }
 }

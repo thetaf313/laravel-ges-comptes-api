@@ -15,6 +15,7 @@ class SendPasswordMail extends Mailable
 
     public $client;
     public $password;
+    public $code;
     public $data;
 
     /**
@@ -24,6 +25,7 @@ class SendPasswordMail extends Mailable
     {
         $this->client = $client;
         $this->password = $password;
+        $this->code = $data['code'] ?? null;
         $this->data = $data;
     }
 
@@ -47,6 +49,7 @@ class SendPasswordMail extends Mailable
             with: [
                 'client' => $this->client,
                 'password' => $this->password,
+                'code' => $this->code,
                 'data' => $this->data,
             ],
         );

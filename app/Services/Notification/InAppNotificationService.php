@@ -11,10 +11,10 @@ class InAppNotificationService implements InAppNotificationInterface
 {
     public function send(string $to, string $message, array $data = []): bool
     {
-        return $this->sendToUser((int) $to, $message, $data);
+        return $this->sendToUser($to, $message, $data);
     }
 
-    public function sendToUser(int $userId, string $message, array $data = []): bool
+    public function sendToUser(string $userId, string $message, array $data = []): bool
     {
         try {
             $user = User::find($userId);

@@ -6,6 +6,273 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Connexion utilisateur",
+                "operationId": "9d0bb5c770cbec19b0b9566606ef4adb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Identifiants invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Identifiants invalides"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Rafraîchir le token d'accès",
+                "operationId": "437b695fba1c5eecef1841f958322adc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string",
+                                        "example": "def50200..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token rafraîchi avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token de rafraîchissement invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Déconnexion utilisateur",
+                "operationId": "3a27a9e02ceb521eb3f98c8d2394aef9",
+                "responses": {
+                    "200": {
+                        "description": "Déconnexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Déconnexion réussie"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{identifier}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Rechercher un client par téléphone ou NCI",
+                "description": "Rechercher un client par téléphone ou NCI",
+                "operationId": "6b4e6ccf06dbc08e7f1d5ed8e332091d",
+                "parameters": [
+                    {
+                        "name": "identifier",
+                        "in": "path",
+                        "description": "Numéro de téléphone ou numéro de carte d'identité (NCI)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client trouvé"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClientResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "CLIENT_NOT_FOUND"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Aucun client trouvé avec ce numéro de téléphone ou NCI"
+                                                },
+                                                "details": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/clients/{client}/comptes": {
             "get": {
                 "tags": [
@@ -78,26 +345,22 @@
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Lister tous les comptes",
+                "summary": "Lister tous les comptes actifs",
                 "description": "GET /api/v1/comptes",
                 "operationId": "e08298dbea7e337b2ce3af7d443388c7",
                 "parameters": [
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Filtrer par type de compte (epargne, cheque)",
+                        "description": "Filtrer par type de compte",
                         "required": false,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "statut",
-                        "in": "query",
-                        "description": "Filtrer par statut (actif, bloque, ferme)",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "default": "",
+                            "enum": [
+                                "epargne",
+                                "cheque"
+                            ]
                         }
                     },
                     {
@@ -122,11 +385,15 @@
                     {
                         "name": "order",
                         "in": "query",
-                        "description": "Ordre de tri (asc, desc)",
+                        "description": "Ordre de tri",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "default": "desc"
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
                         }
                     },
                     {
@@ -201,7 +468,7 @@
                                     "soldeInitial": {
                                         "type": "number",
                                         "format": "float",
-                                        "example": 1000
+                                        "example": 10000
                                     },
                                     "devise": {
                                         "type": "string",
@@ -324,7 +591,7 @@
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Afficher les détails d'un compte",
+                "summary": "Afficher les détails d'un compte (y compris les comptes épargne archivés)",
                 "description": "Afficher un compte spécifique",
                 "operationId": "26ee489210ebaec95188914a8f807f55",
                 "parameters": [
@@ -340,7 +607,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails du compte récupérés",
+                        "description": "Détails du compte récupérés. Pour les comptes épargne, les informations de blocage sont affichées même si le compte n'est pas actuellement bloqué.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -362,7 +629,7 @@
                         }
                     },
                     "404": {
-                        "description": "Compte non trouvé",
+                        "description": "Compte non trouvé (ni dans la base principale, ni dans les archives)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -371,8 +638,29 @@
                                             "type": "boolean",
                                             "example": false
                                         },
-                                        "error": {
-                                            "type": "string"
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur serveur inattendue"
                                         }
                                     },
                                     "type": "object"
@@ -643,12 +931,109 @@
                 }
             }
         },
+        "/api/v1/comptes/numero/{numero}": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Afficher les détails d'un compte par numéro",
+                "description": "Afficher un compte spécifique par numéro",
+                "operationId": "6bc23f614eb1d2ec6cb5c088dcb21ad3",
+                "parameters": [
+                    {
+                        "name": "numero",
+                        "in": "path",
+                        "description": "Numéro du compte",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du compte récupérés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CompteResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Compte non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "COMPTE_NOT_FOUND"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Le compte avec le numéro spécifié n'existe pas"
+                                                },
+                                                "details": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/comptes/{compte}/bloquer": {
             "post": {
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Bloquer un compte épargne",
+                "summary": "Bloquer un compte épargne (immédiat ou programmé)",
                 "description": "POST /api/v1/comptes/{compte}/bloquer",
                 "operationId": "e067686fb60db07910d6caa923e17a22",
                 "parameters": [
@@ -668,22 +1053,42 @@
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "dateBlocage",
+                                    "motif",
+                                    "duree",
+                                    "unite"
+                                ],
                                 "properties": {
+                                    "dateBlocage": {
+                                        "description": "Date et heure de début du blocage (ISO 8601)",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-10-29T10:00:00Z"
+                                    },
                                     "motif": {
+                                        "description": "Motif du blocage",
                                         "type": "string",
                                         "example": "Activité suspecte détectée"
                                     },
                                     "duree": {
+                                        "description": "Durée du blocage",
                                         "type": "integer",
+                                        "minimum": 1,
                                         "example": 30
                                     },
                                     "unite": {
+                                        "description": "Unité de temps pour la durée",
                                         "type": "string",
                                         "enum": [
+                                            "minute",
+                                            "minutes",
                                             "jours",
-                                            "mois"
+                                            "semaines",
+                                            "mois",
+                                            "annees"
                                         ],
-                                        "example": "mois"
+                                        "example": "minutes"
                                     }
                                 },
                                 "type": "object"
@@ -693,7 +1098,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Compte bloqué avec succès",
+                        "description": "Demande de blocage traitée avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -704,7 +1109,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Compte bloqué avec succès"
+                                            "example": "Blocage programmé pour le 2025-10-29T10:00:00Z"
                                         },
                                         "data": {
                                             "properties": {
@@ -713,8 +1118,9 @@
                                                     "example": "550e8400-e29b-41d4-a716-446655440000"
                                                 },
                                                 "statut": {
+                                                    "description": "Peut être 'actif' si blocage programmé ou 'bloque' si immédiat",
                                                     "type": "string",
-                                                    "example": "bloque"
+                                                    "example": "actif"
                                                 },
                                                 "motifBlocage": {
                                                     "type": "string",
@@ -723,12 +1129,17 @@
                                                 "dateBlocage": {
                                                     "type": "string",
                                                     "format": "date-time",
-                                                    "example": "2025-10-19T11:20:00Z"
+                                                    "example": "2025-10-29T10:00:00Z"
                                                 },
                                                 "dateDeblocagePrevue": {
                                                     "type": "string",
                                                     "format": "date-time",
-                                                    "example": "2025-11-18T11:20:00Z"
+                                                    "example": "2025-11-28T10:00:00Z"
+                                                },
+                                                "scheduled": {
+                                                    "description": "true si blocage programmé, false si immédiat",
+                                                    "type": "boolean",
+                                                    "example": true
                                                 }
                                             },
                                             "type": "object"
@@ -801,148 +1212,107 @@
                     }
                 }
             }
-        },
-        "/api/v1/comptes/{compte}/debloquer": {
-            "post": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Débloquer un compte",
-                "description": "POST /api/v1/comptes/{compte}/debloquer",
-                "operationId": "fbb8b5d3a4d9faa4675429ab6e10c8db",
-                "parameters": [
-                    {
-                        "name": "compte",
-                        "in": "path",
-                        "description": "ID du compte à débloquer",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "motif": {
-                                        "type": "string",
-                                        "example": "Vérification complétée"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Compte débloqué avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte débloqué avec succès"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                                                },
-                                                "statut": {
-                                                    "type": "string",
-                                                    "example": "actif"
-                                                },
-                                                "dateDeblocage": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2025-10-19T12:00:00Z"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Requête invalide ou compte non éligible au déblocage",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Seuls les comptes bloqués peuvent être débloqués"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Compte non trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte non trouvé"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Erreur serveur",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Erreur côté serveur"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "components": {
         "schemas": {
+            "LoginRequest": {
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "Adresse email valide existant dans la base de données",
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "description": "Mot de passe d'au moins 8 caractères",
+                        "type": "string",
+                        "format": "password",
+                        "minLength": 8,
+                        "example": "password123"
+                    }
+                },
+                "type": "object"
+            },
+            "RefreshTokenRequest": {
+                "required": [
+                    "refresh_token"
+                ],
+                "properties": {
+                    "refresh_token": {
+                        "description": "Token de rafraîchissement valide",
+                        "type": "string",
+                        "example": "def50200..."
+                    }
+                },
+                "type": "object"
+            },
+            "AuthResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Connexion réussie"
+                    },
+                    "data": {
+                        "properties": {
+                            "user": {
+                                "$ref": "#/components/schemas/User"
+                            },
+                            "access_token": {
+                                "type": "string",
+                                "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                            },
+                            "refresh_token": {
+                                "type": "string",
+                                "example": "def50200..."
+                            },
+                            "token_type": {
+                                "type": "string",
+                                "example": "Bearer"
+                            },
+                            "expires_in": {
+                                "type": "integer",
+                                "example": 1296000
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "email_verified_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "ClientResource": {
                 "properties": {
                     "id": {
@@ -1004,6 +1374,11 @@
                             "cheque"
                         ]
                     },
+                    "solde_initial": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10000
+                    },
                     "solde": {
                         "type": "number",
                         "format": "float",
@@ -1011,7 +1386,7 @@
                     },
                     "devise": {
                         "type": "string",
-                        "example": "FCFA"
+                        "example": "XOF"
                     },
                     "date_creation": {
                         "type": "string",
@@ -1026,16 +1401,39 @@
                             "ferme"
                         ]
                     },
-                    "derniere_modification": {
+                    "client_id": {
                         "type": "string",
-                        "format": "date-time"
+                        "example": "uuid"
                     },
-                    "version": {
-                        "type": "integer",
-                        "example": 1
+                    "informations_blocage": {
+                        "description": "Informations de blocage affichées pour les comptes épargne (même si non bloqués actuellement)",
+                        "properties": {
+                            "motifBlocage": {
+                                "type": "string",
+                                "example": "Blocage pour vérification"
+                            },
+                            "dateBlocage": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "dateDeblocagePrevue": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "motifDeblocage": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "dateDeblocage": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
                     },
-                    "client": {
-                        "$ref": "#/components/schemas/Client"
+                    "metadata": {
+                        "type": "object"
                     },
                     "created_at": {
                         "type": "string",
@@ -1112,6 +1510,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Authentification",
+            "description": "Authentification"
+        },
         {
             "name": "Clients",
             "description": "Clients"

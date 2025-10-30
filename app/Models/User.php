@@ -6,7 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -92,4 +92,46 @@ class User extends Authenticatable
         return $this->morphTo();
     }
 
+    /** 🔗 Relations Passport */
+    public function oauthAccessTokens()
+    {
+        return $this->hasMany(\Laravel\Passport\Token::class, 'user_id');
+    }
+
+    public function oauthClients()
+    {
+        return $this->hasMany(\Laravel\Passport\Client::class, 'user_id');
+    }
+
+    /**
+     * Définir les scopes disponibles pour cet utilisateur
+     */
+    public function getScopes()
+    {
+        // Par défaut, tous les utilisateurs ont accès en lecture
+        $scopes = ['read-comptes'];
+
+        // Si l'utilisateur est admin ou a un rôle spécifique, ajouter plus de permissions
+        if ($this->hasRole('admin') || $this->hasRole('manager')) {
+            $scopes = array_merge($scopes, [
+                'create-comptes',
+                'update-comptes',
+                'delete-comptes',
+                'block-comptes',
+                'unblock-comptes',
+            ]);
+        }
+
+        return $scopes;
+    }
+
+    /**
+     * Vérifier si l'utilisateur a un rôle spécifique
+     */
+    public function hasRole($role)
+    {
+        // Pour l'instant, on utilise une logique simple basée sur l'email
+        // En production, il faudrait une table roles et user_roles
+        return str_contains($this->email, 'admin') || str_contains($this->email, 'manager');
+    }
 }

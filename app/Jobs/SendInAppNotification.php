@@ -14,7 +14,7 @@ class SendInAppNotification implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        public int $userId,
+        public string $userId,
         public string $message,
         public array $data = []
     ) {}

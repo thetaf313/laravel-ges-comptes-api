@@ -42,10 +42,10 @@ class Client extends Model
     protected $fillable = [
         'nom',
         'prenom',
+        'email',
         'telephone',
         'date_naissance',
         'adresse',
         'cni',
     ];
-
 }

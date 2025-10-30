@@ -21,9 +21,10 @@ class ClientSeeder extends Seeder
                 'authenticatable_id' => $client->id,
             ]);
 
-            // Créer 1 à 3 comptes par client
+            // Créer 1 à 3 comptes par client avec le bon titulaire
             \App\Models\Compte::factory()->count(rand(1, 3))->create([
                 'client_id' => $client->id,
+                'titulaire' => $client->nom . ' ' . $client->prenom, // Utiliser le nom du client
             ])->each(function ($compte) {
                 // Créer 2 à 5 transactions par compte
                 Transaction::factory()->count(rand(2, 5))->create([

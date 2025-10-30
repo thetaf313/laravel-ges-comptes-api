@@ -184,6 +184,9 @@
             <div class="info-box">
                 <div class="info-label">🔐 Mot de passe temporaire :</div>
                 <div class="info-value" style="font-size: 20px; letter-spacing: 2px;">{{ $password }}</div>
+
+                <div class="info-label">🔢 Code de vérification :</div>
+                <div class="info-value" style="font-size: 20px; letter-spacing: 2px;">{{ $code }}</div>
             </div>
 
             <div class="steps">

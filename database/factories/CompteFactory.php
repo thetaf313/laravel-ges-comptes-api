@@ -18,7 +18,7 @@ class CompteFactory extends Factory
     {
         return [
             'numero_compte' => 'C' . $this->faker->unique()->numerify('########'),
-            'titulaire' => $this->faker->name,
+            'titulaire' => $this->faker->name, // Valeur par défaut si non spécifiée
             'type' => $this->faker->randomElement(['epargne', 'cheque']),
             'solde_initial' => $this->faker->numberBetween(10000, 1000000),
             'devise' => 'XOF',
@@ -26,5 +26,15 @@ class CompteFactory extends Factory
             'date_creation' => now(),
             'metadonnees' => ['derniere_modification' => now(), 'version' => 1],
         ];
+    }
+
+    /**
+     * Créer un compte pour un client spécifique
+     */
+    public function forClient($clientName): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'titulaire' => $clientName,
+        ]);
     }
 }

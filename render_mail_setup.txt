@@ -1,0 +1,21 @@
+# Variables d'environnement à ajouter sur Render:
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailgun.org  
+MAIL_PORT=587
+MAIL_USERNAME=votre-username-mailgun
+MAIL_PASSWORD=votre-password-mailgun
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@votre-domaine.com
+MAIL_FROM_NAME=Ges-Comptes
+MAIL_ENABLED=true
+
+# Pour SendGrid (alternative):
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.sendgrid.net
+MAIL_PORT=587
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=votre-sendgrid-api-key
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@votre-domaine.com
+MAIL_FROM_NAME=Ges-Comptes
+MAIL_ENABLED=true
