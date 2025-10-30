@@ -4,26 +4,68 @@ namespace App\Services\Email;
 
 use App\Contracts\EmailServiceInterface;
 use App\Mail\SendPasswordMail;
+use App\Services\Mail\MailgunService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class EmailService implements EmailServiceInterface
 {
+    protected $mailgunService;
+
+    public function __construct(MailgunService $mailgunService)
+    {
+        $this->mailgunService = $mailgunService;
+    }
+
     public function send(string $to, string $message, $data = []): bool
     {
         try {
-            // Pour les emails de création de compte, utiliser SendPasswordMail
+            // Essayer d'abord avec le mailer par défaut (SMTP)
             if (isset($data['type']) && $data['type'] === 'account_created') {
                 Mail::to($to)->send(new SendPasswordMail($data['client'], $data['password'], $data));
             } else {
-                // Pour les autres types d'emails, utiliser un format générique
                 Mail::raw($message, function ($mail) use ($to) {
                     $mail->to($to)->subject('Notification Ges-Comptes');
                 });
             }
             return true;
         } catch (\Exception $e) {
-            Log::error('Email sending failed: ' . $e->getMessage());
+            Log::warning('SMTP email failed, trying Mailgun fallback: ' . $e->getMessage());
+
+            // Fallback vers Mailgun
+            return $this->sendWithMailgun($to, $message, $data);
+        }
+    }
+
+    protected function sendWithMailgun(string $to, string $message, $data = []): bool
+    {
+        try {
+            $mailData = [
+                'to' => $to,
+                'subject' => 'Notification Ges-Comptes',
+                'text' => $message,
+            ];
+
+            if (isset($data['type']) && $data['type'] === 'account_created') {
+                $mailData['subject'] = 'Bienvenue sur Ges-Comptes';
+                $mailData['html'] = view('emails.account_created', [
+                    'client' => $data['client'],
+                    'password' => $data['password'],
+                    'data' => $data
+                ])->render();
+            }
+
+            $result = $this->mailgunService->send($mailData);
+
+            if ($result['success']) {
+                Log::info('Email sent via Mailgun fallback: ' . $result['message_id']);
+                return true;
+            } else {
+                Log::error('Mailgun fallback failed: ' . $result['error']);
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error('Mailgun fallback exception: ' . $e->getMessage());
             return false;
         }
     }
@@ -36,7 +78,7 @@ class EmailService implements EmailServiceInterface
 
     public function canSend(): bool
     {
-        // Implement logic to check if emails can be sent (e.g., check SMTP connection)
-        return config('mail.enabled', false);
+        // Vérifier si au moins un service est disponible
+        return config('mail.enabled', false) || $this->mailgunService->isAvailable();
     }
 }
