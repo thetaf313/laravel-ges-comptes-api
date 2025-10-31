@@ -14,6 +14,12 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Si pas de header Authorization, essayer de lire depuis les cookies
+        if (!$request->hasHeader('Authorization') && $request->hasCookie('access_token')) {
+            $token = $request->cookie('access_token');
+            $request->headers->set('Authorization', 'Bearer ' . $token);
+        }
+
         if (!Auth::guard('api')->check()) {
             return response()->json([
                 'success' => false,

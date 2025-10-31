@@ -26,13 +26,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1/auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:api');
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth.api');
 });
 
 // Routes API protégées
-// Routes API protégées - SÉCURITÉ TEMPORAIREMENT DÉSACTIVÉE POUR TESTS
-// Route::prefix('v1')->middleware(['auth:api', 'role:read-comptes'])->group(function () {
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['auth.api'])->group(function () {
     Route::get('/comptes', [CompteController::class, 'index']);
     Route::post('/comptes', [CompteController::class, 'store']); // ->middleware('role:create-comptes');
     Route::get('/comptes/{id}', [CompteController::class, 'show']);
