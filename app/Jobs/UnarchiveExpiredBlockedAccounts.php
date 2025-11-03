@@ -3,14 +3,14 @@
 namespace App\Jobs;
 
 use App\Models\Compte;
-use App\Models\Transaction;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class UnarchiveExpiredBlockedAccounts implements ShouldQueue
 {
@@ -29,112 +29,64 @@ class UnarchiveExpiredBlockedAccounts implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('🚀 Démarrage du job de désarchivage des comptes bloqués expirés');
+        Log::info('Démarrage du désarchivage des comptes bloqués expirés');
 
-        try {
-            // Récupérer tous les comptes archivés dont la date de déblocage prévue est dépassée
-            $archivedAccounts = DB::connection('pgsql_archive')
-                ->table('archived_comptes')
-                ->where('type', 'epargne')
-                ->where('statut', 'bloque')
-                ->where('datedeblocageprevue', '<', now())
-                ->get();
-
-            Log::info("📊 Nombre de comptes à désarchiver : {$archivedAccounts->count()}");
-
-            foreach ($archivedAccounts as $archivedAccount) {
-                DB::transaction(function () use ($archivedAccount) {
-                    $this->unarchiveAccountAndTransactions($archivedAccount);
-                });
-            }
-
-            Log::info('✅ Job de désarchivage terminé avec succès');
-        } catch (\Throwable $th) {
-            Log::error('❌ Erreur lors du désarchivage des comptes', [
-                'error' => $th->getMessage(),
-                'trace' => $th->getTraceAsString()
-            ]);
-            throw $th;
-        }
-    }
-
-    /**
-     * Désarchive un compte et toutes ses transactions
-     */
-    private function unarchiveAccountAndTransactions($archivedAccount): void
-    {
-        Log::info("📦 Désarchivage du compte {$archivedAccount->numero_compte}");
-
-        // Restaurer les transactions d'abord
-        $archivedTransactions = DB::connection('pgsql_archive')
-            ->table('archived_transactions')
-            ->where('compte_id', $archivedAccount->id)
+        // Récupérer les enregistrements archivés dont la date de fin de blocage est échue
+        // Récupérer tous les enregistrements archivés (on filtrera en PHP pour éviter
+        // les problèmes de casse des colonnes sur Postgres/archived DB)
+        $archived = DB::connection('pgsql_archive')->table('archived_comptes')
+            ->where('type', 'epargne')
             ->get();
 
-        $transactionsRestored = 0;
-        foreach ($archivedTransactions as $transaction) {
-            Transaction::create([
-                'id' => $transaction->id,
-                'compte_id' => $transaction->compte_id,
-                'montant' => $transaction->montant,
-                'type' => $transaction->type,
-                'date_transaction' => $transaction->date_transaction,
-                'devise' => $transaction->devise,
-                'description' => $transaction->description,
-                'statut' => $transaction->statut,
-                'created_at' => $transaction->created_at,
-                'updated_at' => $transaction->updated_at,
-            ]);
-            $transactionsRestored++;
+        $unarchivedCount = 0;
+
+        foreach ($archived as $row) {
+            try {
+                // Vérifier la dateDeblocagePrevue (prendre en compte la casse possible)
+                $rowDate = $row->datedeblocageprevue ?? $row->dateDeblocagePrevue ?? null;
+                if (!$rowDate || Carbon::parse($rowDate)->gt(Carbon::now())) {
+                    // Pas encore arrivé à échéance
+                    continue;
+                }
+
+                // Recréer l'enregistrement dans la table comptes
+                $data = [
+                    'id' => $row->id,
+                    'client_id' => $row->client_id,
+                    'numero_compte' => $row->numero_compte,
+                    'titulaire' => $row->titulaire,
+                    'type' => $row->type,
+                    'solde_initial' => $row->solde_initial,
+                    'devise' => $row->devise,
+                    'date_creation' => $row->date_creation,
+                    'statut' => 'actif', // Forcer le statut à actif car le blocage a expiré
+                    'metadonnees' => $row->metadonnees,
+                    'date_fermeture' => $row->date_fermeture,
+                    'motifBlocage' => $row->motifblocage,
+                    'dateBlocage' => $row->dateblocage,
+                    'dateDeblocagePrevue' => $row->datedeblocageprevue,
+                    'motifDeblocage' => 'Blocage expiré automatiquement', // Motif automatique
+                    'dateDeblocage' => Carbon::now(), // Date de déblocage actuelle
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ];
+
+                // Insertion via la connexion par défaut
+                DB::table('comptes')->insert($data);
+
+                // Supprimer de la table d'archive
+                DB::connection('pgsql_archive')->table('archived_comptes')->where('id', $row->id)->delete();
+
+                Log::info('Compte désarchivé', ['compte_id' => $row->id]);
+                $unarchivedCount++;
+            } catch (\Exception $e) {
+                Log::error('Erreur lors du désarchivage du compte', [
+                    'compte_id' => $row->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
-        // Restaurer le compte (en utilisant restore() pour le soft delete)
-        $compte = Compte::withTrashed()->find($archivedAccount->id);
-        if (!$compte) {
-            // Créer le compte s'il n'existe pas
-            $compte = Compte::create([
-                'id' => $archivedAccount->id,
-                'client_id' => $archivedAccount->client_id,
-                'numero_compte' => $archivedAccount->numero_compte,
-                'titulaire' => $archivedAccount->titulaire,
-                'type' => $archivedAccount->type,
-                'solde_initial' => $archivedAccount->solde_initial,
-                'devise' => $archivedAccount->devise,
-                'date_creation' => $archivedAccount->date_creation,
-                'statut' => 'actif', // Désarchiver comme actif
-                'metadonnees' => $archivedAccount->metadonnees,
-                'date_fermeture' => $archivedAccount->date_fermeture,
-                'motifBlocage' => null, // Réinitialiser le blocage
-                'dateBlocage' => null,
-                'dateDeblocagePrevue' => null,
-                'motifDeblocage' => 'Désarchivage automatique - période de blocage expirée',
-                'dateDeblocage' => now(),
-            ]);
-        } else {
-            // Restaurer le compte existant
-            $compte->restore();
-            $compte->update([
-                'statut' => 'actif',
-                'motifBlocage' => null,
-                'dateBlocage' => null,
-                'dateDeblocagePrevue' => null,
-                'motifDeblocage' => 'Désarchivage automatique - période de blocage expirée',
-                'dateDeblocage' => now(),
-            ]);
-        }
-
-        // Supprimer les transactions de la base d'archivage
-        DB::connection('pgsql_archive')
-            ->table('archived_transactions')
-            ->where('compte_id', $archivedAccount->id)
-            ->delete();
-
-        // Supprimer le compte de la base d'archivage
-        DB::connection('pgsql_archive')
-            ->table('archived_comptes')
-            ->where('id', $archivedAccount->id)
-            ->delete();
-
-        Log::info("✅ Compte {$archivedAccount->numero_compte} désarchivé avec {$transactionsRestored} transactions");
+        Log::info('Désarchivage terminé', ['comptes_desarchives' => $unarchivedCount]);
     }
 }

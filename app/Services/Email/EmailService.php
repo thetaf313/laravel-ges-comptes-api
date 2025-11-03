@@ -4,19 +4,20 @@ namespace App\Services\Email;
 
 use App\Contracts\EmailServiceInterface;
 use App\Mail\SendPasswordMail;
+// use App\Services\Email\MailgunService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class EmailService implements EmailServiceInterface
 {
+
     public function send(string $to, string $message, $data = []): bool
     {
         try {
-            // Pour les emails de création de compte, utiliser SendPasswordMail
+            // Essayer d'abord avec le mailer par défaut (SMTP)
             if (isset($data['type']) && $data['type'] === 'account_created') {
                 Mail::to($to)->send(new SendPasswordMail($data['client'], $data['password'], $data));
             } else {
-                // Pour les autres types d'emails, utiliser un format générique
                 Mail::raw($message, function ($mail) use ($to) {
                     $mail->to($to)->subject('Notification Ges-Comptes');
                 });
@@ -36,7 +37,7 @@ class EmailService implements EmailServiceInterface
 
     public function canSend(): bool
     {
-        // Implement logic to check if emails can be sent (e.g., check SMTP connection)
-        return config('mail.enabled', false);
+        // Vérifier si le mailer est configuré
+        return config('mail.default') !== null;
     }
 }

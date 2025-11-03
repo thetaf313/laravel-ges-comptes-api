@@ -1,38 +1,103 @@
-FROM richarvey/nginx-php-fpm:latest
+FROM php:8.3-fpm-alpine
 
-COPY . .
+# Installer les dépendances système et extensions PHP
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libzip-dev \
+    oniguruma-dev \
+    curl-dev \
+    postgresql-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip curl
 
-# Copier la configuration Supervisor
-COPY conf/supervisor-worker.conf /etc/supervisor/conf.d/laravel-worker.conf
+# Installer Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Créer les répertoires nécessaires
+RUN mkdir -p /var/www/html /run/nginx /var/log/supervisor
+
+# Configuration Nginx de base
+RUN echo $'server {\n\
+    listen 80;\n\
+    server_name localhost;\n\
+    root /var/www/html/public;\n\
+    index index.php index.html;\n\
+    \n\
+    location / {\n\
+        try_files $uri $uri/ /index.php?$query_string;\n\
+    }\n\
+    \n\
+    location ~ \\.php$ {\n\
+        fastcgi_pass 127.0.0.1:9000;\n\
+        fastcgi_index index.php;\n\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+        include fastcgi_params;\n\
+    }\n\
+    \n\
+    location ~ /\\.ht {\n\
+        deny all;\n\
+    }\n\
+}' > /etc/nginx/http.d/default.conf
+
+# Configuration PHP-FPM
+RUN echo $'[www]\n\
+user = www-data\n\
+group = www-data\n\
+listen = 127.0.0.1:9000\n\
+pm = dynamic\n\
+pm.max_children = 5\n\
+pm.start_servers = 2\n\
+pm.min_spare_servers = 1\n\
+pm.max_spare_servers = 3' > /usr/local/etc/php-fpm.d/www.conf
+
+# Copier l\'application
+COPY . /var/www/html
+WORKDIR /var/www/html
+
+# Permissions
+RUN if ! getent group www-data > /dev/null 2>&1; then addgroup -g 1000 www-data; fi && \
+    if ! getent passwd www-data > /dev/null 2>&1; then adduser -D -s /bin/sh -u 1000 -G www-data www-data; fi && \
+    chown -R www-data:www-data /var/www/html /run /var/lib/nginx /var/log/nginx
 
 # Installer les dépendances PHP
-RUN composer install --optimize-autoloader --no-dev
+USER www-data
+RUN composer install --optimize-autoloader --no-dev --prefer-dist
 
-# Copier la configuration de production
-COPY .env.production .env
+# Revenir à root pour la configuration
+USER root
+
+# Générer les clés OAuth2 pour Laravel Passport
+RUN php artisan passport:keys --force
 
 # Générer la documentation Swagger
 RUN php artisan l5-swagger:generate
 
-# Permissions pour Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Copier la configuration de production
+COPY .env.production .env
 
-# Rendre les scripts exécutables
-RUN chmod +x start.sh script/start-with-worker.sh
+# Permissions finales
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 storage && \
+    chmod -R 775 storage/logs storage/framework storage/app
 
-# Image config
-ENV SKIP_COMPOSER 1
-ENV WEBROOT /var/www/html/public
-ENV PHP_ERRORS_STDERR 1
-ENV RUN_SCRIPTS 1
-ENV REAL_IP_HEADER 1
+EXPOSE 80
 
-# Laravel config
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-ENV LOG_CHANNEL=stderr
-
-# Allow composer to run as root
-ENV COMPOSER_ALLOW_SUPERUSER=1
+# Script de démarrage
+RUN echo $'#!/bin/sh\n\
+# Vérifier et générer les clés Passport si nécessaire\n\
+if [ ! -f storage/oauth-private.key ] || [ ! -f storage/oauth-public.key ]; then\n\
+    echo "Generating Passport keys..."\n\
+    php artisan passport:keys --force\n\
+fi\n\
+\n\
+php artisan config:cache && \\\n\
+php artisan route:cache && \\\n\
+php artisan view:cache && \\\n\
+nginx -g "daemon off;" & \\\n\
+php-fpm -F' > /start.sh && chmod +x /start.sh
 
 CMD ["/start.sh"]

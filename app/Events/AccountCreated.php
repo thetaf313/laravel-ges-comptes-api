@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\DTOs\ClientNotificationData;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -15,18 +16,14 @@ class AccountCreated implements ShouldQueue
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $client;
-    public $password;
-    public $code;
+    public ClientNotificationData $clientData;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($client, $password, $code)
+    public function __construct(ClientNotificationData $clientData)
     {
-        $this->client = $client;
-        $this->password = $password;
-        $this->code = $code;
+        $this->clientData = $clientData;
     }
 
     /**

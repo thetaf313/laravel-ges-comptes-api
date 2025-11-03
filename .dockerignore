@@ -1,2 +1,11 @@
 vendor/
 node_modules/
+storage/oauth-*.key
+storage/debugbar/
+storage/logs/*.log
+.env
+.git
+.gitignore
+tests/
+phpunit.xml
+README.md

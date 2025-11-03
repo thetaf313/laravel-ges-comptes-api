@@ -12,7 +12,17 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Archiver les comptes bloqués expirés tous les jours à minuit
+        $schedule->command('comptes:archive-expired-blocked')
+            ->dailyAt('00:00')
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        // Désarchiver les comptes bloqués expirés tous les jours à 0h30 du matin
+        $schedule->command('comptes:unarchive-expired-blocked')
+            ->dailyAt('00:30')
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**
@@ -20,7 +30,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands(): void
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

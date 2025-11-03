@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\CompteService;
+use App\Traits\HasUserScopes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 class Compte extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUserScopes;
 
     public $incrementing = false;
     protected $keyType = 'string';

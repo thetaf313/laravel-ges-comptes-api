@@ -33,6 +33,23 @@ trait RestResponse
         ], $code);
     }
 
+    protected function structuredErrorResponse(string $errorCode, string $message, array $details = [], int $statusCode = Response::HTTP_BAD_REQUEST)
+    {
+        $error = [
+            'code' => $errorCode,
+            'message' => $message,
+        ];
+
+        if (!empty($details)) {
+            $error['details'] = $details;
+        }
+
+        return response()->json([
+            'success' => false,
+            'error' => $error
+        ], $statusCode);
+    }
+
     protected function paginationData($pagination)
     {
         return [

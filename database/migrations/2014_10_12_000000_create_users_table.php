@@ -17,8 +17,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-            $table->string('authenticatable_type');
-            $table->string('authenticatable_id');
+            $table->string('authenticatable_type')->nullable();
+            $table->string('authenticatable_id')->nullable();
             $table->string('verification_code')->nullable();
             $table->timestamp('code_expires_at')->nullable();
             $table->boolean('is_active')->default(false);

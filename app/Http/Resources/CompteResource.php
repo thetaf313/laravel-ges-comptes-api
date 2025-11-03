@@ -25,7 +25,18 @@ class CompteResource extends JsonResource
             'date_creation' => $this->date_creation,
             'statut' => $this->statut,
             'client_id' => $this->client_id,
+            'informations_blocage' => $this->when($this->type === 'epargne' && ($this->statut === 'bloque' || $this->dateBlocage), function () {
+                return [
+                    'motifBlocage' => $this->motifBlocage,
+                    'dateBlocage' => $this->dateBlocage?->toISOString(),
+                    'dateDeblocagePrevue' => $this->dateDeblocagePrevue?->toISOString(),
+                    'motifDeblocage' => $this->motifDeblocage,
+                    'dateDeblocage' => $this->dateDeblocage?->toISOString(),
+                ];
+            }),
             'metadata' => $this->metadonnees,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class DebloquerCompteRequest extends FormRequest
+class showByIdRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,19 +22,15 @@ class DebloquerCompteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'motif' => 'required|string|max:255',
+            'id' => 'required|uuid|exists:comptes,id',
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     */
-    public function messages(): array
+    public function messages()
     {
         return [
-            'motif.required' => 'Le motif de déblocage est obligatoire.',
-            'motif.string' => 'Le motif doit être une chaîne de caractères.',
-            'motif.max' => 'Le motif ne peut pas dépasser 255 caractères.',
+            'id.required' => "L'identifiant du compte est requis.",
+            'id.uuid' => "L'identifiant du compte doit être un UUID valide."
         ];
     }
 }

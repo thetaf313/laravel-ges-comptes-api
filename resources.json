@@ -1,0 +1,132 @@
+{
+    "totalComptes": "int",
+    "SousTotalComptes": "int",
+    "nombreTransactions": "int",
+    "listeDixDernieresTransactions": [
+        {
+            "id": "string",
+            "compteId": "string",
+            "type": "depot | retrait | virement | frais",
+            "montant": "number",
+            "devise": "string",
+            "description": "string",
+            "dateTransaction": "datetime",
+            "statut": "en_attente | validee | annulee"
+        }
+    ],
+    "listeComptesRecents": [
+        {
+            "id": "string",
+            "numeroCompte": "string",
+            "titulaire": "string",
+            "type": "epargne | cheque",
+            "solde": "number",
+            "devise": "string",
+            "dateCreation": "date",
+            "statut": "actif | bloque | ferme",
+            "metadata": {
+                "derniereModification": "datetime",
+                "version": "number"
+            }
+        }
+    ]
+}
+
+{
+    "totalDepots": "int",
+    "totalRetraits": "int",
+    "nombreTransactions": "int",
+    "derniereTransaction": {
+        "datateTransaction": "datetime",
+    }
+}
+
+{
+    "success": "true",
+    "message": "Liste des transactions récupérée avec succès.",
+    "data": [
+        {
+        "id": "f32a1e4b-5d6c-4e7f-8a9b-0c1d2e3f4a5b",
+        "compteId": "f43e2d1c-6b5a-4f3e-8d7c-0b1a2e3f4d5c",
+        "type": "depot",
+        "montant": "100000",
+        "devise": "FCFA",
+        "description": "Epargne mensuelle",
+        "dateTransaction": "2024-06-15T10:30:00Z",
+        "statut": "validee"
+    }
+    ],
+    "pagination": {
+
+"currentPage": 1,
+
+"totalPages": 3,
+
+"totalItems": 25,
+
+"itemsPerPage": 10,
+
+"hasNext": true,
+
+"hasPrevious": false
+
+},
+
+"links": {
+
+"self": "/api/v1/comptes/{compte}/transactions?page=1&limit=10",
+
+"next": "/api/v1/comptes/{compte}/transactions?page=2&limit=10",
+
+"first": "/api/v1/comptes/{compte}/transactions?page=1&limit=10",
+
+"last": "/api/v1/comptes/{compte}/transactions?page=3&limit=10"
+
+}
+
+}
+
+
+{
+  "compte_id": "5f8d0c2b-3e4a-4b6f-9a1b-2c3d4e5f6a7b",
+  "type": "Depot",
+  "montant": 250000,
+  "description": "Dépôt mensuel",
+  "devise": "FCFA"
+}
+
+{
+    "success": "true",
+    "message": "Transaction effectuée avec succès.",
+    "data": {
+        "id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+        "reference": "TXN-20240620-0001",
+        "compteId": "5f8d0c2b-3e4a-4b6f-9a1b-2c3d4e5f6a7b",
+        "type": "Depot",
+        "montant": 250000,  
+        "description": "Dépôt mensuel",
+        "devise": "FCFA",
+        "dateTransaction": "2024-06-20T14:30:00Z",
+        "statut": "validee"
+    }
+}
+
+{
+    "success": "false",
+    "message": "Erreur de validation des données.",
+    "errors": {
+        "montant": "Le montant doit être un nombre positif.",
+        "type": "Le type de transaction est invalide.",
+        "compte_id": "Le compte est requis."
+    }
+}
+
+{
+    "success": true,
+    "message": "Résumé des comptes récupéré avec succès.",
+    "data": {
+        "nombreComptes": 5,
+        "sousTotalComptes": 1500000,
+        "nombreTransactions": 120
+    }
+}
