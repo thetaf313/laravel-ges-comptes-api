@@ -70,6 +70,9 @@ RUN composer install --optimize-autoloader --no-dev --prefer-dist
 # Revenir à root pour la configuration
 USER root
 
+# Générer les clés OAuth2 pour Laravel Passport
+RUN php artisan passport:keys --force
+
 # Générer la documentation Swagger
 RUN php artisan l5-swagger:generate
 
@@ -77,12 +80,20 @@ RUN php artisan l5-swagger:generate
 COPY .env.production .env
 
 # Permissions finales
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 storage && \
+    chmod -R 775 storage/logs storage/framework storage/app
 
 EXPOSE 80
 
 # Script de démarrage
 RUN echo $'#!/bin/sh\n\
+# Vérifier et générer les clés Passport si nécessaire\n\
+if [ ! -f storage/oauth-private.key ] || [ ! -f storage/oauth-public.key ]; then\n\
+    echo "Generating Passport keys..."\n\
+    php artisan passport:keys --force\n\
+fi\n\
+\n\
 php artisan config:cache && \\\n\
 php artisan route:cache && \\\n\
 php artisan view:cache && \\\n\

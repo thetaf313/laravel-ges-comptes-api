@@ -29,11 +29,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
- * @OA\Info(
- *     title="Ges-Comptes API",
- *     version="1.0.0",
- *     description="API pour la gestion des comptes bancaires"
- * )
  * @OA\Schema(
  *     schema="CompteResource",
  *     type="object",
@@ -84,10 +79,13 @@ class CompteController extends Controller
 {
     use RestResponse, UuidValidation;
 
-    protected CompteService $compteService;
+    protected $compteService;
 
     public function __construct(CompteService $compteService)
     {
+        // 🎯 SUPER ÉLÉGANT : Resource authorization automatique !
+        $this->authorizeResource(Compte::class, 'compte');
+
         $this->compteService = $compteService;
     }
 
@@ -97,6 +95,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes",
      *     summary="Lister tous les comptes actifs",
      *     tags={"Comptes"},
+     *     security={{"bearerAuth": {}}},
      * @OA\Parameter(
      *         name="type",
      *         in="query",
@@ -156,8 +155,10 @@ class CompteController extends Controller
     {
         Log::info('Index method called for comptes', $request->all());
 
+        // 🎯 ULTRA ÉLÉGANT : Le scope forUser() gère automatiquement les permissions !
         $comptes = Compte::with(['transactions'])
-            ->where('statut', 'actif') // Seuls les comptes actifs sont listés
+            ->forUser(auth()->user()) // 🔥 Magic scope !
+            ->where('statut', 'actif')
             ->filterByType($request->get('type'))
             ->search($request->get('search'))
             ->sort($request->get('sort'), $request->get('order'))
@@ -169,8 +170,6 @@ class CompteController extends Controller
             $this->paginationData($comptes)
         );
     }
-
-
     /**
      * POST /api/v1/comptes
      * @OA\Post(
@@ -227,6 +226,8 @@ class CompteController extends Controller
      */
     public function store(StoreCompteRequest $request)
     {
+        // 🎯 Plus besoin de $this->authorize() ! Le __construct() s'en charge !
+
         Log::info('📥 Requête reçue dans store()', [
             'method' => $request->method(),
             'route' => $request->route() ? $request->route()->getName() : 'unknown',
@@ -411,6 +412,8 @@ class CompteController extends Controller
             // Recherche du compte (lance une exception si non trouvé)
             $compte = $this->compteService->findCompteById($id);
 
+            // 🎯 Plus besoin de $this->authorize() ! Le __construct() s'en charge !
+
             return $this->successResponse(
                 new CompteResource($compte->load('client')),
                 'Détails du compte récupérés'
@@ -488,6 +491,9 @@ class CompteController extends Controller
 
             // Recherche du compte (lance une exception si non trouvé)
             $compte = $this->compteService->findCompteByNumero($numero);
+
+            // Vérifier les autorisations via policy
+            $this->authorize('view', $compte);
 
             return $this->successResponse(
                 new CompteResource($compte->load('client')),
@@ -589,6 +595,10 @@ class CompteController extends Controller
 
             // Recherche et validation du compte
             $compte = $this->compteService->findCompteById($id);
+
+            // Vérifier les autorisations via policy
+            $this->authorize('update', $compte);
+
             $this->compteService->ensureCompteIsModifiable($compte);
 
             Log::info('📝 Mise à jour du compte', [
@@ -741,6 +751,10 @@ class CompteController extends Controller
 
             // Recherche et validation du compte
             $compte = $this->compteService->findCompteById($id);
+
+            // Vérifier les autorisations via policy
+            $this->authorize('delete', $compte);
+
             $this->compteService->ensureCompteIsModifiable($compte);
 
             Log::info('🗑️ Suppression du compte', [
@@ -876,6 +890,10 @@ class CompteController extends Controller
 
             // Recherche et validation du compte
             $compte = $this->compteService->findCompteById($id);
+
+            // Vérifier les autorisations via policy
+            $this->authorize('block', $compte);
+
             $this->compteService->ensureCompteIsModifiable($compte);
 
             Log::info('🔒 Blocage du compte', [

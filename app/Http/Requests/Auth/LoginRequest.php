@@ -35,7 +35,7 @@ class LoginRequest extends FormRequest
                 'max:255'
             ],
             'code' => [
-                'required',
+                'nullable',
                 'string',
                 'max:20'
             ],

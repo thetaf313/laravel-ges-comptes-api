@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PassportClientSeeder::class,
             AdminSeeder::class,
+            AdminTestSeeder::class, // Admin de test
             ClientSeeder::class,
         ]);
 

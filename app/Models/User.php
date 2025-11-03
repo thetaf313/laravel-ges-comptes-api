@@ -108,8 +108,28 @@ class User extends Authenticatable
      */
     public function getScopes()
     {
-        // Pour l'instant, pas de scopes pour éviter les erreurs de validation
-        return [];
+        $scopes = [];
+
+        if ($this->isAdmin()) {
+            // Admin a tous les droits
+            $scopes = [
+                'read-comptes',
+                'create-comptes',
+                'update-comptes',
+                'delete-comptes',
+                'block-comptes',
+                'manage-clients',
+                'admin-access'
+            ];
+        } elseif ($this->isClient()) {
+            // Client a des droits limités
+            $scopes = [
+                'read-comptes',    // Peut lire (ses propres comptes seulement)
+                'update-comptes'   // Peut modifier (ses propres comptes seulement)
+            ];
+        }
+
+        return $scopes;
     }
 
     /**

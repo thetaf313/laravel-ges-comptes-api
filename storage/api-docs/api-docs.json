@@ -1,10 +1,31 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Ges-Comptes API",
-        "description": "API pour la gestion des comptes bancaires",
-        "version": "1.0.0"
+        "title": "API Gestion des Comptes",
+        "description": "API pour la gestion des comptes avec authentification OAuth2",
+        "contact": {
+            "email": "admin@example.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "2.7.0"
     },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Serveur de développement local"
+        },
+        {
+            "url": "https://sayande-moustapha-gestion-comptes-api.onrender.com",
+            "description": "Serveur de production (Render)"
+        },
+        {
+            "url": "https://staging.example.com",
+            "description": "Serveur de staging"
+        }
+    ],
     "paths": {
         "/api/v1/auth/login": {
             "post": {
@@ -12,6 +33,7 @@
                     "Authentification"
                 ],
                 "summary": "Connexion utilisateur",
+                "description": "Authentifie un utilisateur. Pour les comptes actifs, seuls email/password sont requis. Pour les comptes inactifs, un code de vérification est nécessaire pour l'activation.",
                 "operationId": "9d0bb5c770cbec19b0b9566606ef4adb",
                 "requestBody": {
                     "required": true,
@@ -26,6 +48,15 @@
                 "responses": {
                     "200": {
                         "description": "Connexion réussie",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "Cookies HTTP-only contenant access_token et refresh_token",
+                                "schema": {
+                                    "type": "string",
+                                    "example": "access_token=eyJ0...; HttpOnly; Secure; SameSite=Strict"
+                                }
+                            }
+                        },
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -35,7 +66,7 @@
                         }
                     },
                     "401": {
-                        "description": "Identifiants invalides",
+                        "description": "Identifiants invalides ou code de vérification incorrect",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -47,6 +78,34 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Identifiants invalides"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "INVALID_CREDENTIALS"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Code de vérification requis pour compte inactif",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code de vérification requis pour activer votre compte"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "VERIFICATION_CODE_REQUIRED"
                                         }
                                     },
                                     "type": "object"
@@ -63,26 +122,19 @@
                     "Authentification"
                 ],
                 "summary": "Rafraîchir le token d'accès",
+                "description": "Rafraîchit le token d'accès en utilisant le refresh token stocké dans les cookies HTTP-only",
                 "operationId": "437b695fba1c5eecef1841f958322adc",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "refresh_token": {
-                                        "type": "string",
-                                        "example": "def50200..."
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Token rafraîchi avec succès",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "Nouveaux cookies HTTP-only avec les tokens rafraîchis",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -92,7 +144,7 @@
                         }
                     },
                     "401": {
-                        "description": "Token de rafraîchissement invalide",
+                        "description": "Refresh token manquant ou invalide",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -103,7 +155,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Token invalide"
+                                            "example": "Refresh token manquant"
                                         }
                                     },
                                     "type": "object"
@@ -114,7 +166,7 @@
                 },
                 "security": [
                     {
-                        "passport": []
+                        "cookieAuth": []
                     }
                 ]
             }
@@ -173,6 +225,105 @@
                         "passport": []
                     }
                 ]
+            }
+        },
+        "/api/v1/clients/{client}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Afficher les détails d'un client par son ID",
+                "description": "Afficher les détails d'un client par son ID",
+                "operationId": "c1aaafb8e0a93e996c1d5fcb7ce893ac",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID du client (UUID)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du client récupérés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Détails du client récupérés"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClientResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "CLIENT_NOT_FOUND"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Le client avec l'ID spécifié n'existe pas"
+                                                },
+                                                "details": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/clients/{identifier}": {
@@ -436,7 +587,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
@@ -1234,19 +1390,11 @@
                         "format": "password",
                         "minLength": 8,
                         "example": "password123"
-                    }
-                },
-                "type": "object"
-            },
-            "RefreshTokenRequest": {
-                "required": [
-                    "refresh_token"
-                ],
-                "properties": {
-                    "refresh_token": {
-                        "description": "Token de rafraîchissement valide",
+                    },
+                    "code": {
+                        "description": "Code de vérification (requis uniquement pour les comptes inactifs)",
                         "type": "string",
-                        "example": "def50200..."
+                        "example": "000000"
                     }
                 },
                 "type": "object"
@@ -1263,16 +1411,9 @@
                     },
                     "data": {
                         "properties": {
-                            "user": {
-                                "$ref": "#/components/schemas/User"
-                            },
                             "access_token": {
                                 "type": "string",
                                 "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
-                            },
-                            "refresh_token": {
-                                "type": "string",
-                                "example": "def50200..."
                             },
                             "token_type": {
                                 "type": "string",
@@ -1281,6 +1422,16 @@
                             "expires_in": {
                                 "type": "integer",
                                 "example": 1296000
+                            },
+                            "scopes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "example": [
+                                    "read-comptes",
+                                    "create-comptes"
+                                ]
                             }
                         },
                         "type": "object"
@@ -1506,6 +1657,20 @@
                     }
                 },
                 "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Utilisez le token d'accès obtenu via /api/v1/auth/login",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            },
+            "cookieAuth": {
+                "type": "apiKey",
+                "description": "Authentication via HTTP-only cookie (pour les navigateurs)",
+                "name": "access_token",
+                "in": "cookie"
             }
         }
     },

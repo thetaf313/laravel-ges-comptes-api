@@ -31,13 +31,13 @@ Route::prefix('v1/auth')->group(function () {
 
 // Routes API protégées
 Route::prefix('v1')->middleware(['auth.api'])->group(function () {
-    Route::get('/comptes', [CompteController::class, 'index']);
-    Route::post('/comptes', [CompteController::class, 'store']); // ->middleware('role:create-comptes');
+    Route::get('/comptes', [CompteController::class, 'index'])->middleware('role:read-comptes');
+    Route::post('/comptes', [CompteController::class, 'store'])->middleware('role:create-comptes');
     Route::get('/comptes/{id}', [CompteController::class, 'show']);
     Route::get('/comptes/numero/{numero}', [CompteController::class, 'showByNumero']);
-    Route::patch('/comptes/{id}', [CompteController::class, 'update']); // ->middleware('role:update-comptes');
-    Route::delete('/comptes/{id}', [CompteController::class, 'destroy']); // ->middleware('role:delete-comptes');
-    Route::post('/comptes/{id}/bloquer', [CompteController::class, 'bloquer']); // ->middleware('role:block-comptes');
+    Route::patch('/comptes/{id}', [CompteController::class, 'update'])->middleware('role:update-comptes');
+    Route::delete('/comptes/{id}', [CompteController::class, 'destroy'])->middleware('role:delete-comptes');
+    Route::post('/comptes/{id}/bloquer', [CompteController::class, 'bloquer'])->middleware('role:block-comptes');
     Route::get('clients/{client}', [ClientController::class, 'show'])->where('client', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
     Route::get('clients/{client}/comptes', [ClientController::class, 'comptesByClient']);
     Route::get('clients/search/{identifier}', [ClientController::class, 'searchByIdentifier']);
